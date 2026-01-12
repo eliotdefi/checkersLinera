@@ -24,7 +24,7 @@ A real-time multiplayer checkers game built on Linera's microchain architecture.
 ```bash
 # Clone repository
 git clone <repo-url>
-cd Lcheckers
+cd checkersLinera
 
 # Run startup script
 ./start.sh
