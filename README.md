@@ -1,6 +1,6 @@
 # Linera Checkers
 
-A real-time multiplayer checkers game built on Linera's microchain architecture. 
+A real-time multiplayer checkers game built on Linera's microchain architecture.
 
 ## Features
  
