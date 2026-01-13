@@ -3,7 +3,7 @@
 A real-time multiplayer checkers game built on Linera's microchain architecture.
 
 ## Features
-
+ 
 - **Real-Time Multiplayer**: Instant move synchronization via cross-chain messaging
 - **ELO Rating System**: Separate ratings for Bullet, Blitz, and Rapid time controls
 - **Matchmaking Queue**: Find opponents by time control preference
