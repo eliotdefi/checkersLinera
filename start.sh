@@ -75,6 +75,9 @@ echo -e "${GREEN}✓ Linera service on port 8081${NC}"
 # 7. Start frontend
 echo "Starting frontend..."
 cd "$SCRIPT_DIR/frontend"
+echo "Installing frontend dependencies..."
+npm install > /tmp/npm_install.log 2>&1
+echo -e "${GREEN}✓ Dependencies installed${NC}"
 npm run dev > /tmp/frontend.log 2>&1 &
 sleep 5
 echo -e "${GREEN}✓ Frontend on port 3000${NC}"
