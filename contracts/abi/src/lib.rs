@@ -810,3 +810,692 @@ pub struct Tournament {
 fn default_is_public() -> bool {
     true
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ========================================================================
+    // BOARD UTILITY TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_get_piece_starting_position() {
+        let board = STARTING_BOARD;
+        assert!(get_piece(board, 0, 1).is_red());
+        assert!(get_piece(board, 0, 3).is_red());
+        assert!(get_piece(board, 7, 0).is_black());
+        assert!(get_piece(board, 7, 2).is_black());
+        assert!(get_piece(board, 3, 0).is_empty());
+        assert!(get_piece(board, 4, 1).is_empty());
+    }
+
+    #[test]
+    fn test_get_piece_out_of_bounds() {
+        let board = STARTING_BOARD;
+        assert!(get_piece(board, 8, 0).is_empty());
+        assert!(get_piece(board, 0, 8).is_empty());
+        assert!(get_piece(board, 10, 10).is_empty());
+    }
+
+    #[test]
+    fn test_set_piece_basic() {
+        let board = STARTING_BOARD;
+        let new_board = set_piece(board, 3, 0, Piece::Red);
+        assert!(get_piece(&new_board, 3, 0).is_red());
+    }
+
+    #[test]
+    fn test_set_piece_king() {
+        let board = STARTING_BOARD;
+        let new_board = set_piece(board, 4, 1, Piece::RedKing);
+        assert_eq!(get_piece(&new_board, 4, 1), Piece::RedKing);
+        assert!(get_piece(&new_board, 4, 1).is_king());
+    }
+
+    #[test]
+    fn test_set_piece_empty() {
+        let board = STARTING_BOARD;
+        let new_board = set_piece(board, 0, 1, Piece::Empty);
+        assert!(get_piece(&new_board, 0, 1).is_empty());
+    }
+
+    #[test]
+    fn test_count_pieces_starting() {
+        let (red, black) = count_pieces(STARTING_BOARD);
+        assert_eq!(red, 12);
+        assert_eq!(black, 12);
+    }
+
+    #[test]
+    fn test_count_pieces_after_capture() {
+        let board = STARTING_BOARD;
+        let board = set_piece(&board, 0, 1, Piece::Empty);
+        let (red, black) = count_pieces(&board);
+        assert_eq!(red, 11);
+        assert_eq!(black, 12);
+    }
+
+    #[test]
+    fn test_count_pieces_with_kings() {
+        let board = " R R R R/        /        /        /        /        /        /B B B B ";
+        let (red, black) = count_pieces(board);
+        assert_eq!(red, 4);
+        assert_eq!(black, 4);
+    }
+
+    #[test]
+    fn test_is_valid_square_dark_squares() {
+        assert!(is_valid_square(0, 1));
+        assert!(is_valid_square(0, 3));
+        assert!(is_valid_square(1, 0));
+        assert!(is_valid_square(7, 6));
+    }
+
+    #[test]
+    fn test_is_valid_square_light_squares() {
+        assert!(!is_valid_square(0, 0));
+        assert!(!is_valid_square(0, 2));
+        assert!(!is_valid_square(1, 1));
+        assert!(!is_valid_square(7, 7));
+    }
+
+    #[test]
+    fn test_is_valid_square_out_of_bounds() {
+        assert!(!is_valid_square(8, 0));
+        assert!(!is_valid_square(0, 8));
+        assert!(!is_valid_square(8, 8));
+    }
+
+    // ========================================================================
+    // PIECE TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_piece_is_red() {
+        assert!(Piece::Red.is_red());
+        assert!(Piece::RedKing.is_red());
+        assert!(!Piece::Black.is_red());
+        assert!(!Piece::BlackKing.is_red());
+        assert!(!Piece::Empty.is_red());
+    }
+
+    #[test]
+    fn test_piece_is_black() {
+        assert!(Piece::Black.is_black());
+        assert!(Piece::BlackKing.is_black());
+        assert!(!Piece::Red.is_black());
+        assert!(!Piece::RedKing.is_black());
+        assert!(!Piece::Empty.is_black());
+    }
+
+    #[test]
+    fn test_piece_is_king() {
+        assert!(Piece::RedKing.is_king());
+        assert!(Piece::BlackKing.is_king());
+        assert!(!Piece::Red.is_king());
+        assert!(!Piece::Black.is_king());
+        assert!(!Piece::Empty.is_king());
+    }
+
+    #[test]
+    fn test_piece_is_empty() {
+        assert!(Piece::Empty.is_empty());
+        assert!(!Piece::Red.is_empty());
+        assert!(!Piece::Black.is_empty());
+        assert!(!Piece::RedKing.is_empty());
+        assert!(!Piece::BlackKing.is_empty());
+    }
+
+    #[test]
+    fn test_piece_to_king() {
+        assert_eq!(Piece::Red.to_king(), Piece::RedKing);
+        assert_eq!(Piece::Black.to_king(), Piece::BlackKing);
+        assert_eq!(Piece::RedKing.to_king(), Piece::RedKing);
+        assert_eq!(Piece::BlackKing.to_king(), Piece::BlackKing);
+        assert_eq!(Piece::Empty.to_king(), Piece::Empty);
+    }
+
+    // ========================================================================
+    // TURN TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_turn_opposite() {
+        assert_eq!(Turn::Red.opposite(), Turn::Black);
+        assert_eq!(Turn::Black.opposite(), Turn::Red);
+    }
+
+    #[test]
+    fn test_turn_double_opposite() {
+        assert_eq!(Turn::Red.opposite().opposite(), Turn::Red);
+        assert_eq!(Turn::Black.opposite().opposite(), Turn::Black);
+    }
+
+    // ========================================================================
+    // CHECKERS MOVE TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_checkers_move_new() {
+        let m = CheckersMove::new(2, 1, 3, 2);
+        assert_eq!(m.from_row, 2);
+        assert_eq!(m.from_col, 1);
+        assert_eq!(m.to_row, 3);
+        assert_eq!(m.to_col, 2);
+        assert!(m.captured_row.is_none());
+        assert!(!m.promoted);
+    }
+
+    #[test]
+    fn test_checkers_move_with_capture() {
+        let m = CheckersMove::new(2, 1, 4, 3).with_capture(3, 2);
+        assert_eq!(m.captured_row, Some(3));
+        assert_eq!(m.captured_col, Some(2));
+    }
+
+    #[test]
+    fn test_checkers_move_with_promotion() {
+        let m = CheckersMove::new(6, 1, 7, 2).with_promotion();
+        assert!(m.promoted);
+    }
+
+    #[test]
+    fn test_checkers_move_capture_and_promotion() {
+        let m = CheckersMove::new(5, 2, 7, 4).with_capture(6, 3).with_promotion();
+        assert!(m.promoted);
+        assert_eq!(m.captured_row, Some(6));
+    }
+
+    // ========================================================================
+    // TIME CONTROL TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_time_control_bullet_1_0() {
+        let tc = TimeControl::Bullet1_0;
+        assert_eq!(tc.initial_time_ms(), 60_000);
+        assert_eq!(tc.increment_ms(), 0);
+    }
+
+    #[test]
+    fn test_time_control_bullet_2_1() {
+        let tc = TimeControl::Bullet2_1;
+        assert_eq!(tc.initial_time_ms(), 120_000);
+        assert_eq!(tc.increment_ms(), 1_000);
+    }
+
+    #[test]
+    fn test_time_control_blitz_3_0() {
+        let tc = TimeControl::Blitz3_0;
+        assert_eq!(tc.initial_time_ms(), 180_000);
+        assert_eq!(tc.increment_ms(), 0);
+    }
+
+    #[test]
+    fn test_time_control_blitz_5_3() {
+        let tc = TimeControl::Blitz5_3;
+        assert_eq!(tc.initial_time_ms(), 300_000);
+        assert_eq!(tc.increment_ms(), 3_000);
+    }
+
+    #[test]
+    fn test_time_control_rapid_10_0() {
+        let tc = TimeControl::Rapid10_0;
+        assert_eq!(tc.initial_time_ms(), 600_000);
+        assert_eq!(tc.increment_ms(), 0);
+    }
+
+    #[test]
+    fn test_time_control_all() {
+        let all = TimeControl::all();
+        assert_eq!(all.len(), 5);
+        assert!(all.contains(&TimeControl::Bullet1_0));
+        assert!(all.contains(&TimeControl::Rapid10_0));
+    }
+
+    // ========================================================================
+    // CLOCK TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_clock_new() {
+        let clock = Clock::new(TimeControl::Blitz5_3);
+        assert_eq!(clock.initial_time_ms, 300_000);
+        assert_eq!(clock.increment_ms, 3_000);
+        assert_eq!(clock.red_time_ms, 300_000);
+        assert_eq!(clock.black_time_ms, 300_000);
+        assert!(clock.active_player.is_none());
+    }
+
+    #[test]
+    fn test_clock_start() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(1000);
+        assert_eq!(clock.last_move_at, 1000);
+        assert_eq!(clock.active_player, Some(Turn::Red));
+    }
+
+    #[test]
+    fn test_clock_make_move_switches_player() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        assert_eq!(clock.active_player, Some(Turn::Red));
+
+        let success = clock.make_move(5000);
+        assert!(success);
+        assert_eq!(clock.active_player, Some(Turn::Black));
+    }
+
+    #[test]
+    fn test_clock_make_move_deducts_time() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        clock.make_move(10_000);
+        assert_eq!(clock.red_time_ms, 50_000);
+    }
+
+    #[test]
+    fn test_clock_make_move_adds_increment() {
+        let mut clock = Clock::new(TimeControl::Blitz5_3);
+        clock.start(0);
+        clock.make_move(10_000);
+        assert_eq!(clock.red_time_ms, 293_000);
+    }
+
+    #[test]
+    fn test_clock_timeout_none() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        assert!(clock.timed_out(30_000).is_none());
+    }
+
+    #[test]
+    fn test_clock_timeout_red() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        assert_eq!(clock.timed_out(70_000), Some(Turn::Red));
+    }
+
+    #[test]
+    fn test_clock_timeout_black() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        clock.make_move(5_000);
+        assert_eq!(clock.timed_out(70_000), Some(Turn::Black));
+    }
+
+    #[test]
+    fn test_clock_get_remaining_active() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        let remaining = clock.get_remaining(Turn::Red, 10_000);
+        assert_eq!(remaining, 50_000);
+    }
+
+    #[test]
+    fn test_clock_get_remaining_inactive() {
+        let mut clock = Clock::new(TimeControl::Bullet1_0);
+        clock.start(0);
+        let remaining = clock.get_remaining(Turn::Black, 10_000);
+        assert_eq!(remaining, 60_000);
+    }
+
+    // ========================================================================
+    // PLAYER STATS / ELO TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_player_stats_default() {
+        let stats = PlayerStats::default();
+        assert_eq!(stats.games_played, 0);
+        assert_eq!(stats.bullet_rating, 1200);
+        assert_eq!(stats.blitz_rating, 1200);
+        assert_eq!(stats.rapid_rating, 1200);
+    }
+
+    #[test]
+    fn test_player_stats_new() {
+        let stats = PlayerStats::new("chain123".to_string());
+        assert_eq!(stats.chain_id, "chain123");
+        assert_eq!(stats.games_played, 0);
+    }
+
+    #[test]
+    fn test_player_stats_record_win() {
+        let mut stats = PlayerStats::default();
+        stats.record_win();
+        assert_eq!(stats.games_played, 1);
+        assert_eq!(stats.games_won, 1);
+        assert_eq!(stats.win_streak, 1);
+    }
+
+    #[test]
+    fn test_player_stats_record_loss() {
+        let mut stats = PlayerStats::default();
+        stats.record_win();
+        stats.record_win();
+        stats.record_loss();
+        assert_eq!(stats.games_played, 3);
+        assert_eq!(stats.games_lost, 1);
+        assert_eq!(stats.win_streak, 0);
+        assert_eq!(stats.best_streak, 2);
+    }
+
+    #[test]
+    fn test_player_stats_record_draw() {
+        let mut stats = PlayerStats::default();
+        stats.record_draw();
+        assert_eq!(stats.games_played, 1);
+        assert_eq!(stats.games_drawn, 1);
+    }
+
+    #[test]
+    fn test_player_stats_best_streak() {
+        let mut stats = PlayerStats::default();
+        stats.record_win();
+        stats.record_win();
+        stats.record_win();
+        stats.record_loss();
+        stats.record_win();
+        assert_eq!(stats.win_streak, 1);
+        assert_eq!(stats.best_streak, 3);
+    }
+
+    #[test]
+    fn test_elo_win_against_equal() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1200, 1.0, &TimeControl::Blitz5_3);
+        assert!(stats.blitz_rating > 1200);
+        assert_eq!(stats.blitz_games, 1);
+    }
+
+    #[test]
+    fn test_elo_loss_against_equal() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1200, 0.0, &TimeControl::Blitz5_3);
+        assert!(stats.blitz_rating < 1200);
+    }
+
+    #[test]
+    fn test_elo_draw_against_equal() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1200, 0.5, &TimeControl::Blitz5_3);
+        assert_eq!(stats.blitz_rating, 1200);
+    }
+
+    #[test]
+    fn test_elo_win_against_higher() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1400, 1.0, &TimeControl::Bullet1_0);
+        assert!(stats.bullet_rating > 1216);
+    }
+
+    #[test]
+    fn test_elo_win_against_lower() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1000, 1.0, &TimeControl::Rapid10_0);
+        assert!(stats.rapid_rating < 1216);
+        assert!(stats.rapid_rating > 1200);
+    }
+
+    #[test]
+    fn test_elo_minimum_rating() {
+        let mut stats = PlayerStats::default();
+        stats.bullet_rating = 110;
+        stats.update_rating(1500, 0.0, &TimeControl::Bullet1_0);
+        assert!(stats.bullet_rating >= 100);
+    }
+
+    #[test]
+    fn test_elo_maximum_rating() {
+        let mut stats = PlayerStats::default();
+        stats.blitz_rating = 2990;
+        stats.update_rating(1000, 1.0, &TimeControl::Blitz3_0);
+        assert!(stats.blitz_rating <= 3000);
+    }
+
+    #[test]
+    fn test_elo_k_factor_new_player() {
+        let mut stats = PlayerStats::default();
+        stats.update_rating(1200, 1.0, &TimeControl::Blitz5_3);
+        assert_eq!(stats.blitz_rating, 1216);
+    }
+
+    #[test]
+    fn test_elo_k_factor_experienced_player() {
+        let mut stats = PlayerStats::default();
+        stats.blitz_games = 30;
+        stats.update_rating(1200, 1.0, &TimeControl::Blitz5_3);
+        assert_eq!(stats.blitz_rating, 1208);
+    }
+
+    #[test]
+    fn test_get_rating_by_time_control() {
+        let mut stats = PlayerStats::default();
+        stats.bullet_rating = 1100;
+        stats.blitz_rating = 1200;
+        stats.rapid_rating = 1300;
+
+        assert_eq!(stats.get_rating(&TimeControl::Bullet1_0), 1100);
+        assert_eq!(stats.get_rating(&TimeControl::Bullet2_1), 1100);
+        assert_eq!(stats.get_rating(&TimeControl::Blitz3_0), 1200);
+        assert_eq!(stats.get_rating(&TimeControl::Blitz5_3), 1200);
+        assert_eq!(stats.get_rating(&TimeControl::Rapid10_0), 1300);
+    }
+
+    #[test]
+    fn test_record_win_with_rating() {
+        let mut stats = PlayerStats::default();
+        stats.record_win_with_rating(1200, &TimeControl::Blitz5_3);
+        assert_eq!(stats.games_won, 1);
+        assert!(stats.blitz_rating > 1200);
+    }
+
+    #[test]
+    fn test_record_loss_with_rating() {
+        let mut stats = PlayerStats::default();
+        stats.record_loss_with_rating(1200, &TimeControl::Blitz5_3);
+        assert_eq!(stats.games_lost, 1);
+        assert!(stats.blitz_rating < 1200);
+    }
+
+    // ========================================================================
+    // GAME STATE TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_checkers_game_new() {
+        let game = CheckersGame::new("game1".to_string(), Some("player1".to_string()), PlayerType::Human);
+        assert_eq!(game.id, "game1");
+        assert_eq!(game.red_player, Some("player1".to_string()));
+        assert!(game.black_player.is_none());
+        assert_eq!(game.status, GameStatus::Pending);
+        assert_eq!(game.current_turn, Turn::Red);
+    }
+
+    #[test]
+    fn test_checkers_game_new_timed() {
+        let game = CheckersGame::new_timed(
+            "game2".to_string(),
+            Some("player1".to_string()),
+            PlayerType::Human,
+            TimeControl::Blitz5_3,
+        );
+        assert!(game.clock.is_some());
+        let clock = game.clock.unwrap();
+        assert_eq!(clock.initial_time_ms, 300_000);
+    }
+
+    #[test]
+    fn test_checkers_game_can_player_move_red() {
+        let mut game = CheckersGame::new("g".to_string(), Some("p1".to_string()), PlayerType::Human);
+        game.black_player = Some("p2".to_string());
+        game.status = GameStatus::Active;
+        game.current_turn = Turn::Red;
+
+        assert!(game.can_player_move("p1"));
+        assert!(!game.can_player_move("p2"));
+    }
+
+    #[test]
+    fn test_checkers_game_can_player_move_black() {
+        let mut game = CheckersGame::new("g".to_string(), Some("p1".to_string()), PlayerType::Human);
+        game.black_player = Some("p2".to_string());
+        game.status = GameStatus::Active;
+        game.current_turn = Turn::Black;
+
+        assert!(!game.can_player_move("p1"));
+        assert!(game.can_player_move("p2"));
+    }
+
+    #[test]
+    fn test_checkers_game_can_player_move_pending() {
+        let game = CheckersGame::new("g".to_string(), Some("p1".to_string()), PlayerType::Human);
+        assert!(!game.can_player_move("p1"));
+    }
+
+    #[test]
+    fn test_checkers_game_with_options_red() {
+        let game = CheckersGame::new_with_options(
+            "g".to_string(),
+            "creator".to_string(),
+            ColorPreference::Red,
+            true,
+            None,
+        );
+        assert_eq!(game.red_player, Some("creator".to_string()));
+        assert!(game.black_player.is_none());
+    }
+
+    #[test]
+    fn test_checkers_game_with_options_black() {
+        let game = CheckersGame::new_with_options(
+            "g".to_string(),
+            "creator".to_string(),
+            ColorPreference::Black,
+            true,
+            None,
+        );
+        assert!(game.red_player.is_none());
+        assert_eq!(game.black_player, Some("creator".to_string()));
+    }
+
+    #[test]
+    fn test_checkers_game_with_options_random() {
+        let game = CheckersGame::new_with_options(
+            "g".to_string(),
+            "creator".to_string(),
+            ColorPreference::Random,
+            false,
+            Some(TimeControl::Bullet1_0),
+        );
+        assert!(game.creator_wants_random);
+        assert!(!game.is_rated);
+        assert!(game.clock.is_some());
+    }
+
+    // ========================================================================
+    // DRAW OFFER TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_draw_offer_state_default() {
+        let state = DrawOfferState::default();
+        assert_eq!(state, DrawOfferState::None);
+    }
+
+    #[test]
+    fn test_draw_offer_states() {
+        assert_ne!(DrawOfferState::OfferedByRed, DrawOfferState::OfferedByBlack);
+        assert_ne!(DrawOfferState::None, DrawOfferState::OfferedByRed);
+    }
+
+    // ========================================================================
+    // QUEUE ENTRY TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_queue_entry_new() {
+        let entry = QueueEntry::new("chain1".to_string(), TimeControl::Blitz5_3, 12345);
+        assert_eq!(entry.chain_id, "chain1");
+        assert_eq!(entry.time_control, TimeControl::Blitz5_3);
+        assert_eq!(entry.joined_at, 12345);
+    }
+
+    // ========================================================================
+    // TOURNAMENT TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_tournament_status_default() {
+        let status = TournamentStatus::default();
+        assert_eq!(status, TournamentStatus::Registration);
+    }
+
+    #[test]
+    fn test_match_status_default() {
+        let status = MatchStatus::default();
+        assert_eq!(status, MatchStatus::Pending);
+    }
+
+    #[test]
+    fn test_tournament_default() {
+        let tournament = Tournament::default();
+        assert!(tournament.id.is_empty());
+        assert_eq!(tournament.status, TournamentStatus::Registration);
+        assert!(tournament.registered_players.is_empty());
+    }
+
+    // ========================================================================
+    // SERIALIZATION TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_piece_serialization() {
+        let piece = Piece::RedKing;
+        let serialized = bcs::to_bytes(&piece).unwrap();
+        let deserialized: Piece = bcs::from_bytes(&serialized).unwrap();
+        assert_eq!(piece, deserialized);
+    }
+
+    #[test]
+    fn test_game_status_serialization() {
+        let status = GameStatus::Active;
+        let serialized = bcs::to_bytes(&status).unwrap();
+        let deserialized: GameStatus = bcs::from_bytes(&serialized).unwrap();
+        assert_eq!(status, deserialized);
+    }
+
+    #[test]
+    fn test_time_control_serialization() {
+        let tc = TimeControl::Blitz5_3;
+        let serialized = bcs::to_bytes(&tc).unwrap();
+        let deserialized: TimeControl = bcs::from_bytes(&serialized).unwrap();
+        assert_eq!(tc, deserialized);
+    }
+
+    #[test]
+    fn test_checkers_move_serialization() {
+        let m = CheckersMove::new(2, 1, 4, 3).with_capture(3, 2);
+        let serialized = bcs::to_bytes(&m).unwrap();
+        let deserialized: CheckersMove = bcs::from_bytes(&serialized).unwrap();
+        assert_eq!(m.from_row, deserialized.from_row);
+        assert_eq!(m.captured_row, deserialized.captured_row);
+    }
+
+    #[test]
+    fn test_message_serialization() {
+        let msg = Message::GameStarted {
+            game_id: "g1".to_string(),
+            red_player: "r".to_string(),
+            black_player: "b".to_string(),
+        };
+        let serialized = bcs::to_bytes(&msg).unwrap();
+        let deserialized: Message = bcs::from_bytes(&serialized).unwrap();
+        match deserialized {
+            Message::GameStarted { game_id, .. } => assert_eq!(game_id, "g1"),
+            _ => panic!("Wrong message type"),
+        }
+    }
+}
