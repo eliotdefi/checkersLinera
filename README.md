@@ -8,7 +8,7 @@ A real-time multiplayer checkers game built on Linera's microchain architecture.
 - **ELO Rating System**: Separate ratings for Bullet, Blitz, and Rapid time controls
 - **Matchmaking Queue**: Find opponents by time control preference
 - **Tournament System**: Create and run Swiss-system tournaments
-- **Chess Clocks**: Multiple time control options (1+0, 2+1, 3+0, 5+3, 10+0)
+- **Game Clocks**: Multiple time control options (1+0, 2+1, 3+0, 5+3, 10+0)
 - **Practice Mode**: Play against AI to improve your skills
 
 ## Quick Start
