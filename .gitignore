@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+.tmp*/
+tmp/
+
+# Rust
+**/target/
+Cargo.lock
+
+# Linera
+*.db
+wallet_*.json
+keystore_*.json
+server_*.json
+committee.json
+
+# Next.js
+.next/
+out/
+
+# Vercel
+.vercel

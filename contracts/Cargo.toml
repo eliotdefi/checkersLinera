@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["abi", "checkers"]
+
+[workspace.dependencies]
+linera-sdk = { version = "0.15.7" }
+linera-views = { version = "0.15.7" }
+async-graphql = { version = "=7.0.17", default-features = false }
+async-graphql-derive = { version = "=7.0.17", default-features = false }
+async-graphql-parser = { version = "=7.0.17" }
+async-graphql-value = { version = "=7.0.17" }
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+bcs = "0.1.6"
+
+[profile.release]
+opt-level = "s"
+lto = false
+codegen-units = 16
+panic = "abort"

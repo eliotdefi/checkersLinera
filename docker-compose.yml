@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  checkers:
+    build: .
+    ports:
+      - "8080:8080"   # Linera GraphQL
+      - "8081:8081"   # Second player GraphQL (optional)
+      - "3000:3000"   # Frontend
+    environment:
+      - RUST_LOG=info
+      - NEXT_PUBLIC_LINERA_GRAPHQL_URL=http://localhost:8080
+    volumes:
+      - linera-data:/root/.config/linera
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  linera-data:

@@ -1,0 +1,24 @@
+[package]
+name = "checkers"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+checkers-abi = { path = "../abi" }
+linera-sdk.workspace = true
+linera-views.workspace = true
+async-graphql.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+bcs.workspace = true
+
+[dev-dependencies]
+linera-sdk = { workspace = true, features = ["test"] }
+
+[[bin]]
+name = "checkers_contract"
+path = "src/contract.rs"
+
+[[bin]]
+name = "checkers_service"
+path = "src/service.rs"
