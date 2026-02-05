@@ -69,7 +69,20 @@ npm run dev
 
 Access at `http://localhost:3000`
 
-### Testnet Deployment
+### Quick Testnet Deployment (One Command)
+
+```bash
+./testnet.sh
+```
+
+This automated script will:
+- Initialize testnet wallet (if needed)
+- Request a chain from the faucet
+- Build and deploy your contract
+- Start the GraphQL service
+- Configure and launch the frontend
+
+### Manual Testnet Deployment
 
 ```bash
 # Initialize wallet with testnet

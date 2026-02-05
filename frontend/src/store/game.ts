@@ -355,6 +355,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       if (data?.game) {
         // Debug: Log actual game data from backend
+        console.log({
           id: data.game.id,
           status: data.game.status,
           statusType: typeof data.game.status,
