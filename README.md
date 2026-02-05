@@ -22,7 +22,7 @@ A real-time multiplayer checkers game built on the Linera blockchain, featuring 
 - **Smart Contract**: Rust (Linera SDK)
 - **Frontend**: Next.js 14, React, TypeScript
 - **State Management**: Zustand
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS 
 - **Blockchain**: Linera Protocol
 
 ## Quick Start
